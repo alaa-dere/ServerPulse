@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using ServerPulse.Collector.Configurations;
+using ServerPulse.Collector.Services;
 
 namespace ServerPulse.Collector;
 
@@ -7,18 +8,28 @@ public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private readonly ServerStatisticsConfig _config;
+    private readonly IServerStatisticsCollector _statisticsCollector;
 
-    public Worker(ILogger<Worker> logger, IOptions<ServerStatisticsConfig> options)
+    public Worker(ILogger<Worker> logger, IOptions<ServerStatisticsConfig> options, IServerStatisticsCollector statisticsCollector)
     {
         _logger = logger;
         _config = options.Value;
+        _statisticsCollector = statisticsCollector;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            _logger.LogInformation("Collecting statistics for server {ServerIdentifier} at {Time}", _config.ServerIdentifier, DateTimeOffset.Now);
+            var statistics = await _statisticsCollector.CollectAsync(stoppingToken);
+
+            _logger.LogInformation(
+                "Server: {ServerIdentifier} | CPU: {CpuUsage:F2}% | Memory Used: {MemoryUsage:F2} MB | Available Memory: {AvailableMemory:F2} MB | Time: {Timestamp}",
+                _config.ServerIdentifier,
+                statistics.CpuUsage,
+                statistics.MemoryUsage,
+                statistics.AvailableMemory,
+                statistics.Timestamp);
 
             await Task.Delay(TimeSpan.FromSeconds(_config.SamplingIntervalSeconds), stoppingToken);
         }
