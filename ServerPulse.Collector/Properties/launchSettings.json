@@ -1,0 +1,12 @@
+﻿{
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "ServerPulse.Collector": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
